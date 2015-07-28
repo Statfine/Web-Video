@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-cn" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title>Eastiming - 视频精准搜索</title>
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="format-detection" content="telephone=no">
+    
+
+    <style type="text/css">
+	body,div,p,h1,h2,h3,h4,h5,h6,h7,form,ul,li,dl,dt,dd,input,a,textarea,select,em,i,strong,s{ margin:0; padding:0; font-size:12px; font-family:"微软雅黑"; color:#333;word-break:break-all;word-wrap: break-word;}
+	
+	/*  边框不计算  */
+	* {-webkit-box-sizing: border-box;-moz-box-sizing: border-box;box-sizing: border-box;}
+	*, *:before, *:after {box-sizing: border-box;}
+	li {list-style-type:none}
+	
+	.clearfix::after{content: ""; clear: both; display: block; overflow: hidden}  /* 注意content 和display */
+	
+	img{ border:none; outline:none }
+	
+	body {background-color:#e2e2e2; width:100%; height:100%; position:relative}
+	
+	.top_content {width:100%; height:200px; overflow: hidden; position:relative}
+	.top_content .bac {width:100%; height:auto; position:absolute; top:0; left:0}
+	.top_content .action {width:190px;position:absolute; left:50%; margin-left:-85px; overflow:hidden}
+	.top_content .action .next {width:32px; height:32px; margin-top:120px}
+	.top_content .action .play {width:64px; height:64px; margin:0 20px}
+	
+	#container {width:100%;height:2px;padding:none;}
+	#container #stick {background-color:dodgerblue;height:2px;width:0px;}
+	
+	.video_list {}
+	.video_list li {padding:20px 10px; font-size:16px; border-top:#999 1px solid; color:#666}
+	.video_list .choose { color:#ea8010}
+	.video_list li .title {margin-left:10px; font-size:16px;}
+	.video_list .choose .title {color:#ea8010}
+	.video_list > li:first-child{border-top:0}
+	
+	.no_data {text-align:center; margin-top:50px; font-size:24px; display:none}
+	
+	</style>
+    
+</head>
+<body>
+ 
+	<div class="top_content">
+    	
+        <img class="bac" src="img/bac_pause.jpg"/>
+        
+        <div class="action" >
+        	<img id="btn_backward" class="next" src="img/backward.png"/>
+            <img id="btn_play" class="play" src="img/pause.png"/>
+            <img id="btn_forward" class="next" src="img/forward.png"/>
+        </div>
+        
+    </div>
+    
+    
+    <audio id="aud" autoplay="autoplay"></audio>
+    <div id="container">
+        <div id="stick"></div>
+    </div>
+    
+    
+    <ul class="video_list">
+    	
+    </ul>
+    
+    <div class="no_data">
+    	暂无列表
+    </div>
+
+		
+</body>
+
+
+<script src="http://libs.baidu.com/jquery/1.8.3/jquery.min.js"></script>
+<script>
+        
+		var clickAble = true;
+		var msrc = '';
+		
+		 window.onload=function(){
+			//当前播放的歌曲索引
+			var currentIndex=-1;
+			//  播放器元素对象
+			var audio=document.getElementById("aud");
+			//进度条
+			var stick=document.getElementById("stick");
+			//初始化函数
+			function finit(){
+				
+			}
+			//播放停止按钮
+			var oPlayOrPause=document.getElementById("btn_play");
+			// 播放或暂停
+			oPlayOrPause.onclick=fPlayMusic
+			function fPlayMusic(){
+				if(!clickAble){
+					return;
+				}
+				
+				if(currentIndex==-1){
+					audio.src=msrc[0];
+					currentIndex=0;
+					showListItem(currentIndex);
+				}
+				if(audio.paused){
+					audio.play();
+					oPlayOrPause.src = "img/play.png";
+				}else{
+					audio.pause();
+					oPlayOrPause.src = "img/pause.png";
+				}
+			}
+			// 上一曲
+			document.getElementById("btn_backward").onclick=function(){
+				if(!clickAble){
+					return;
+				}
+				if(currentIndex == -1){
+					currentIndex = msrc.length-1;
+				}else if (currentIndex == 0) {
+					currentIndex = msrc.length-1;
+				} else {
+					currentIndex--;
+				}
+				audio.src = msrc[currentIndex];
+				stick.style.width=0;
+				audio.play();
+				showListItem(currentIndex);
+				oPlayOrPause.src = "img/play.png";
+			}
+			// 下一曲
+			document.getElementById("btn_forward").onclick=function(){
+					if(!clickAble){
+						return;
+					}
+				
+					 if (currentIndex == (msrc.length-1)) {
+						 currentIndex = 0;
+					 } else {
+						 currentIndex++;
+					 }
+					 audio.src = msrc[currentIndex];
+					 stick.style.width=0;
+					 audio.play();
+					 showListItem(currentIndex);
+					 oPlayOrPause.src = "img/play.png";
+				 }
+			//播放进度条
+				audio.addEventListener('timeupdate',function(){
+					if (!isNaN(audio.duration)) {
+						var progressValue = audio.currentTime/audio.duration*document.getElementById('container').clientWidth;
+						stick.style.width = parseInt(progressValue) + 'px';
+					};
+				},false);
+			//歌曲结束时
+			audio.addEventListener('ended',function(){
+				stick.style.width=0;
+				document.getElementById("btn_forward").onclick();
+			},false);
+			//判断歌曲是否可以播放
+			audio.addEventListener('canplay',function(){
+				//alert('canplay')
+			},false);
+			
+			
+			
+			getList();
+			
+			$(".video_list").delegate("li","click",function(){	
+				currentIndex = Number($(this).attr('data_num'));
+				alert($(this).index())
+				audio.src = msrc[currentIndex];
+				stick.style.width=0;
+				audio.play();
+				showListItem(currentIndex);
+				oPlayOrPause.src = "img/play.png";
+            });
+		
+		}
+		
+		function getList(){				
+			setData(null);
+		}
+		
+		function setData(data){
+			var titleList=["托米奇就不当行为公开致歉 澳洲网协望帮其走出困境",
+						"东京奥运主会场遭遇“烧钱迷踪” 日本上下质疑",
+						"刘国梁世乒赛丢定情信物价值50万 警辅1小时帮找回",
+						"夫妇3年两中910万 概率为2800亿分之一",
+						"印度裁判执法国足战不丹 区楚良：取胜可能大",
+						"尤文欲向意足协索赔4.44亿 追讨被剥夺两届冠军",];
+			//歌曲路径
+			msrc=["http://w.tingtoutiao.com/2015-7-18/2015-07-18-13-13-43_128.mp3",
+						"http://w.tingtoutiao.com/2015-7-11/2015-07-11-15-53-44_128.mp3",
+						"http://w.tingtoutiao.com/2015-5-6/2015-05-06-11-52-32_128.mp3",
+						"http://w.tingtoutiao.com/2015-4-15/2015-04-15-00-32-50_128.mp3",
+						"http://w.tingtoutiao.com/2015-6-11/2015-06-11-18-11-17_128.mp3",
+						"http://w.tingtoutiao.com/2015-3-26/2015-03-26-14-44-27_128.mp3",];	
+			
+			var appenList = '';			
+			for(var i = 0; i<titleList.length; i++){
+				var num = i+1;
+				appenList += '<li data_num="'+i+'">'
+								+'<p class="title">'+titleList[i]+'</p>'
+							+'</li>'
+			}
+			$(".video_list").html('');//清空
+			$(".video_list").append(appenList);
+			
+			
+			//document.getElementById("btn_play").onclick();
+		}
+		
+		function showListItem(position){
+			var sumNum = 0;
+			$('.video_list li').each(function(){
+				if(sumNum == position){
+					$(this).addClass('choose');
+				}else{
+					$(this).removeClass('choose');
+				}
+				sumNum++;
+			});
+		}
+	
+	
+</script>
+</html>
