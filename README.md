@@ -12,3 +12,6 @@ input:focus{
     -webkit-user-modify:read-write-plaintext-only;
 	}
 -webkit-user-modify属性中的	read-write-plaintext-only 可以拆分read 和write
+
+
+微信内网页跳转，微信会对特殊url做编码，建议使用encodeURI对中文进行编码，解码decodeURI
